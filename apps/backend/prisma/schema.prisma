@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  password     String
+  fullName     String
+  role         UserRole @default(GIAO_LY_VIEN)
+  phone        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  refreshToken String?
+
+  classes           Class[]            @relation("ClassTeacher")
+  teachingSchedules TeachingSchedule[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  GIAO_XU_ADMIN
+  GIAO_LY_VIEN
+}
+
+model Student {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  saintName     String?
+  firstName     String
+  lastName      String
+  fullName      String
+  gender        Gender
+  dateOfBirth   DateTime
+  dateOfBaptism DateTime?
+  address       String?
+  note          String?
+
+  // Liên kết giáo xứ/giáo họ
+  parishId String?
+  parish   Parish? @relation(fields: [parishId], references: [id])
+
+  // Quan hệ lớp học
+  classEnrollments ClassStudent[]
+
+  // Quan hệ điểm danh
+  attendances Attendance[]
+
+  // Quan hệ điểm số
+  grades Grade[]
+
+  // Quan hệ phụ huynh
+  guardians Guardian[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+
+  @@index([fullName])
+  @@index([dateOfBirth])
+  @@map("students")
+}
+
+model Parish {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  address     String?
+  students    Student[]
+
+  @@map("parishes")
+}
+
+model Guardian {
+  id           String  @id @default(cuid())
+  name         String
+  relationship String // Bố, Mẹ, Ông, Bà, ...
+  phone        String
+  email        String?
+  address      String?
+  isPrimary    Boolean @default(false)
+  note         String?
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("guardians")
+}
+
+model Class {
+  id           String  @id @default(cuid())
+  name         String
+  gradeLevel   String // "Thiếu Nhi", "Kinh Thánh", "Vào Đời"
+  academicYear String // "2024-2025"
+  description  String?
+  room         String?
+
+  // Giáo lý viên phụ trách
+  teacherId String?
+  teacher   User?   @relation("ClassTeacher", fields: [teacherId], references: [id])
+
+  // Học sinh trong lớp
+  students ClassStudent[]
+
+  // Các buổi học
+  sessions Session[]
+
+  // Các cột điểm
+  gradeColumns GradeColumn[]
+
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  isActive         Boolean            @default(true)
+  Grade            Grade[]
+  TeachingSchedule TeachingSchedule[]
+
+  @@unique([name, academicYear])
+  @@map("classes")
+}
+
+model ClassStudent {
+  id         String    @id @default(cuid())
+  classId    String
+  studentId  String
+  student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class      Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime  @default(now())
+  leftAt     DateTime?
+  note       String?
+
+  @@unique([classId, studentId])
+  @@map("class_students")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  date        DateTime
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String? // Chủ đề buổi học
+  description String?
+
+  // Điểm danh
+  attendances Attendance[]
+
+  // Sổ đầu bài
+  soDauBai SoDauBai?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([classId, date])
+  @@map("sessions")
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  sessionId String
+  studentId String
+  session   Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status    AttendanceStatus @default(PRESENT)
+  note      String?
+
+  @@unique([sessionId, studentId])
+  @@map("attendances")
+}
+
+enum AttendanceStatus {
+  PRESENT // Có mặt
+  ABSENT_EXCUSED // Vắng có phép
+  ABSENT_UNEXCUSED // Vắng không phép
+  LATE // Đi muộn
+}
+
+model SoDauBai {
+  id        String  @id @default(cuid())
+  sessionId String  @unique
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Sĩ số - tự động tính từ attendances
+  totalStudents   Int
+  presentCount    Int
+  absentExcused   Int
+  absentUnexcused Int
+  lateCount       Int
+
+  lessonContent String? // Nội dung bài học
+  homework      String? // Bài tập về nhà
+  rating        Int? // Đánh giá sao (1-5)
+  teacherNote   String? // Ghi chú của GLV
+  assistantNote String? // Ghi chú trợ giảng
+
+  // Chữ ký số
+  confirmedBy String? // user_id
+  confirmedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("so_dau_bai")
+}
+
+model GradeColumn {
+  id          String          @id @default(cuid())
+  classId     String
+  class       Class           @relation(fields: [classId], references: [id], onDelete: Cascade)
+  name        String // "Điểm 15 phút", "Điểm miệng", "Điểm 1 tiết", "Điểm học kỳ"
+  type        GradeColumnType
+  weight      Float           @default(1.0)
+  maxScore    Float           @default(10.0)
+  order       Int
+  isPublished Boolean         @default(false)
+
+  grades Grade[]
+
+  @@unique([classId, name])
+  @@map("grade_columns")
+}
+
+enum GradeColumnType {
+  ORAL // Điểm miệng
+  FIFTEEN_MIN // 15 phút
+  ONE_PERIOD // 1 tiết
+  MIDTERM // Giữa kỳ
+  FINAL // Cuối kỳ
+}
+
+model Grade {
+  id            String      @id @default(cuid())
+  studentId     String
+  gradeColumnId String
+  classId       String
+  student       Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradeColumn   GradeColumn @relation(fields: [gradeColumnId], references: [id], onDelete: Cascade)
+  class         Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  score         Float
+  note          String?
+  recordedBy    String // user_id
+  recordedAt    DateTime    @default(now())
+
+  @@unique([studentId, gradeColumnId])
+  @@map("grades")
+}
+
+model TeachingSchedule {
+  id            String   @id @default(cuid())
+  teacherId     String
+  classId       String
+  teacher       User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  class         Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  scheduleDate  DateTime
+  lessonTitle   String
+  lessonContent String?
+  materials     String? // Tài liệu cần chuẩn bị
+  note          String?
+  isCompleted   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teaching_schedules")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
