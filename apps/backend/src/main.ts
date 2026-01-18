@@ -7,23 +7,21 @@ async function bootstrap() {
   
   // Enable CORS
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000'],
     credentials: true,
   });
   
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
+      whitelist: true, // Loại bỏ các trường không có trong DTO
+      forbidNonWhitelisted: true, // Báo lỗi nếu có trường không hợp lệ
+      transform: true, // Tự động transform types
     }),
   );
   
-  // Global prefix
-  app.setGlobalPrefix('api');
-  
-  await app.listen(process.env.PORT || 3001);
-  console.log(`🚀 Application is running on: ${await app.getUrl()}`);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`🚀 Application is running on: http://localhost:${port}`);
 }
 bootstrap();
