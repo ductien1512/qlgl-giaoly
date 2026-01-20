@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ReactQueryProvider } from "@/providers/react-query-provider";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "QLGL - Quản lý Giáo lý",
-  description: "Hệ thống quản lý giáo lý cho giáo xứ",
+  title: "Hệ thống Quản lý Giáo lý",
+  description: "Quản lý học sinh, lớp học và điểm danh giáo lý",
 };
 
 export default function RootLayout({
@@ -17,7 +19,14 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={inter.className}>
-        {children}
+        <ReactQueryProvider>
+          {children}
+          <Toaster 
+            position="top-right"
+            richColors
+            closeButton
+          />
+        </ReactQueryProvider>
       </body>
     </html>
   );

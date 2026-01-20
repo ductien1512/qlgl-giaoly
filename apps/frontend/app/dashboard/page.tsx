@@ -1,100 +1,143 @@
+'use client';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Users, BookOpen, Calendar, TrendingUp } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { studentsAPI } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => studentsAPI.getStats(),
+  });
+
+  const dashboardCards = [
+    {
+      title: 'Tổng học sinh',
+      value: stats?.total || 0,
+      icon: Users,
+      color: 'bg-blue-500',
+      description: 'Học sinh đang theo học',
+    },
+    {
+      title: 'Học sinh nam',
+      value: stats?.byGender?.MALE || 0,
+      icon: Users,
+      color: 'bg-blue-500',
+      description: 'Số lượng học sinh nam',
+    },
+    {
+      title: 'Học sinh nữ',
+      value: stats?.byGender?.FEMALE || 0,
+      icon: Users,
+      color: 'bg-pink-500',
+      description: 'Số lượng học sinh nữ',
+    },
+    {
+      title: 'Lớp học',
+      value: '2',
+      icon: BookOpen,
+      color: 'bg-green-500',
+      description: 'Tổng số lớp học',
+    },
+  ];
+
+  const recentActivities = [
+    { id: 1, action: 'Đăng nhập hệ thống', user: user?.fullName, time: 'Vừa xong' },
+    { id: 2, action: 'Cập nhật thông tin học sinh', user: 'Nguyễn Văn A', time: '10 phút trước' },
+    { id: 3, action: 'Điểm danh buổi sáng', user: 'Trần Thị B', time: '1 giờ trước' },
+    { id: 4, action: 'Nhập điểm học kỳ', user: 'Phạm Văn C', time: '2 giờ trước' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard QLGL</h1>
-          <p className="text-gray-600">Trung tâm điều khiển hệ thống quản lý giáo lý</p>
-        </div>
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div>
+        <h1 className="text-3xl font-bold">Xin chào, {user?.fullName}!</h1>
+        <p className="text-gray-600 mt-2">
+          Chào mừng bạn đến với Hệ thống Quản lý Giáo lý
+        </p>
       </div>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Stats Cards */}
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Tổng học sinh</p>
-                <p className="text-3xl font-bold text-gray-900">0</p>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {dashboardCards.map((card) => (
+          <Card key={card.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {card.title}
+              </CardTitle>
+              <div className={`p-2 rounded-full ${card.color} text-white`}>
+                <card.icon className="h-4 w-4" />
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 text-xl">👥</span>
-              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{card.value}</div>
+              <p className="text-xs text-gray-500">{card.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Recent Activities and Quick Actions */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Activities */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Hoạt động gần đây</CardTitle>
+            <CardDescription>Các hoạt động mới nhất trong hệ thống</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-center">
+                  <div className="ml-4 space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {activity.action}
+                    </p>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <span>{activity.user}</span>
+                      <span className="mx-2">•</span>
+                      <span>{activity.time}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Lớp học</p>
-                <p className="text-3xl font-bold text-gray-900">0</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-green-600 text-xl">🏫</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">GLV đang hoạt động</p>
-                <p className="text-3xl font-bold text-gray-900">0</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 text-xl">👨‍🏫</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Buổi học hôm nay</p>
-                <p className="text-3xl font-bold text-gray-900">0</p>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <span className="text-yellow-600 text-xl">📅</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
+          </CardContent>
+        </Card>
+
         {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Thao tác nhanh</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="bg-blue-50 text-blue-700 p-4 rounded-lg hover:bg-blue-100 text-center">
-              <div className="text-2xl mb-2">➕</div>
-              <div className="font-medium">Thêm học sinh</div>
-            </button>
-            
-            <button className="bg-green-50 text-green-700 p-4 rounded-lg hover:bg-green-100 text-center">
-              <div className="text-2xl mb-2">📝</div>
-              <div className="font-medium">Điểm danh</div>
-            </button>
-            
-            <button className="bg-purple-50 text-purple-700 p-4 rounded-lg hover:bg-purple-100 text-center">
-              <div className="text-2xl mb-2">📊</div>
-              <div className="font-medium">Nhập điểm</div>
-            </button>
-            
-            <button className="bg-orange-50 text-orange-700 p-4 rounded-lg hover:bg-orange-100 text-center">
-              <div className="text-2xl mb-2">📋</div>
-              <div className="font-medium">Báo cáo</div>
-            </button>
-          </div>
-        </div>
-        
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Hoạt động gần đây</h2>
-          <div className="text-gray-500 text-center py-8">
-            <p className="text-lg">Chưa có hoạt động nào</p>
-            <p className="text-sm mt-2">Hãy bắt đầu bằng cách thêm học sinh hoặc tạo lớp học</p>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Thao tác nhanh</CardTitle>
+            <CardDescription>Truy cập nhanh các chức năng chính</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" className="h-auto py-4 flex flex-col">
+                <Users className="h-6 w-6 mb-2" />
+                <span>Thêm học sinh</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex flex-col">
+                <Calendar className="h-6 w-6 mb-2" />
+                <span>Điểm danh</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex flex-col">
+                <BookOpen className="h-6 w-6 mb-2" />
+                <span>Tạo lớp học</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex flex-col">
+                <TrendingUp className="h-6 w-6 mb-2" />
+                <span>Xem báo cáo</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
