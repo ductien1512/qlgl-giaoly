@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Student, Guardian, StudentStats } from '@/types/student';
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -71,37 +72,44 @@ export const authAPI = {
 
 // Students API functions
 export const studentsAPI = {
-  getAll: async (params?: any) => {
+  getAll: async (params?: any): Promise<{
+    data: Student[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> => {
     const response = await apiClient.get('/students', { params });
     return response.data;
   },
 
-  getById: async (id: string) => {
+  getById: async (id: string): Promise<Student> => {
     const response = await apiClient.get(`/students/${id}`);
     return response.data;
   },
 
-  create: async (data: any) => {
+  create: async (data: any): Promise<Student> => {
     const response = await apiClient.post('/students', data);
     return response.data;
   },
 
-  update: async (id: string, data: any) => {
+  update: async (id: string, data: any): Promise<Student> => {
     const response = await apiClient.patch(`/students/${id}`, data);
     return response.data;
   },
 
-  delete: async (id: string) => {
-    const response = await apiClient.delete(`/students/${id}`);
-    return response.data;
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/students/${id}`);
   },
 
-  getStats: async () => {
+  getStats: async (): Promise<StudentStats> => {
     const response = await apiClient.get('/students/stats');
     return response.data;
   },
 
-  addGuardian: async (studentId: string, guardianData: any) => {
+  addGuardian: async (studentId: string, guardianData: any): Promise<Guardian> => {
     const response = await apiClient.post(`/students/${studentId}/guardians`, guardianData);
     return response.data;
   },

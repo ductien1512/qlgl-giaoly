@@ -1,6 +1,6 @@
 import AuthLayout from '@/app/auth-layout';
 
-export default function Layout({
+export default function LoginLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
